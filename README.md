@@ -1,4 +1,4 @@
-### Nodejs + PostgresSQL + Docker
+### Nodejs + PostgreSQL + Docker
 
 ### Run auto reload development
 
