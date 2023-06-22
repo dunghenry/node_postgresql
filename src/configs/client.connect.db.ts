@@ -3,11 +3,11 @@ import dotenv from 'dotenv';
 import colors from 'colors';
 dotenv.config();
 export const client = new Client({
-    user: process.env.USER,
-    host: process.env.HOST,
-    database: process.env.DATABASE,
+    user: 'postgres',
+    host: 'postgres',
+    database: 'DB',
     password: 'postgres',
-    port: process.env.PORTDB,
+    port: 5432,
 });
 
 const connectDB = async () => {

@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import colors from 'colors';
 const connectLogs = async (): Promise<void> => {
     try {
-        await mongoose.connect(process.env.MONGODB_URI);
+        await mongoose.connect('mongodb://127.0.0.1:27017/db');
         console.log(colors.green('Connect MongoDB successfully!!'));
     } catch (error) {
         console.log(error);

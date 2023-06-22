@@ -8,11 +8,14 @@ import winston from 'winston';
 import expressWinston from 'express-winston';
 import sequelize from './configs/connect.db';
 import viewEngine from './configs/viewEngine';
-import { MongoDB } from 'winston-mongodb';
 import routes from './routes';
 require('winston-mongodb').MongoDB;
 import connectLogs from './configs/connect.log';
 import { logger, myFormat } from './helpers/logger';
+import {
+    MongoDBConnectionOptions,
+    MongoDBTransportInstance,
+} from 'winston-mongodb';
 dotenv.config();
 const port: Number = +process.env.PORT || 4000;
 const app: Express = express();
@@ -20,7 +23,7 @@ app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 app.use(helmet());
 app.use(cors());
-app.use(morgan('dev'));
+app.use(morgan('combined'));
 //connect db
 (async (): Promise<void> => {
     try {
@@ -34,32 +37,28 @@ app.use(morgan('dev'));
         console.error(colors.red('Unable to connect to the database:'), error);
     }
 })();
-//connect db logs
-connectLogs();
-//set view engine, views, static file
-viewEngine(app);
-//config routes
-routes(app);
+const {
+    MongoDB,
+}: { MongoDB: MongoDBTransportInstance } = require('winston-mongodb');
+const mongoTransport = new MongoDB({
+    db: 'mongodb://127.0.0.1:27017/db',
+    options: {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+    },
+    collection: 'logs',
+} as MongoDBConnectionOptions);
 app.use(
     expressWinston.logger({
-        transports: [
-            new winston.transports.MongoDB({
-                db: process.env.MONGODB_URI,
-                options: {
-                    useNewUrlParser: true,
-                    useUnifiedTopology: true,
-                },
-                collection: 'logs',
-            }),
-        ],
+        transports: [mongoTransport],
         format: winston.format.combine(
             winston.format.json(),
             winston.format.timestamp(),
             winston.format.metadata(),
             winston.format.prettyPrint(),
         ),
-        winstonInstance: logger, // log file
-        statusLevels: true, // log to db
+        // winstonInstance: logger,
+        statusLevels: true,
     }),
 );
 app.use(
@@ -78,6 +77,12 @@ app.use(
         ),
     }),
 );
+//connect db logs
+connectLogs();
+//set view engine, views, static file
+viewEngine(app);
+//config routes
+routes(app);
 app.listen(port, () => {
     console.log(colors.green(`Server listening on http://localhost:${port}`));
 });
